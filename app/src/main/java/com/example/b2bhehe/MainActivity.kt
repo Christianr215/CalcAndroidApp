@@ -5,6 +5,7 @@ import android.R.attr.onClick
 import android.R.attr.button
 import android.R.attr.text
 import android.os.Bundle
+import android.service.autofill.OnClickAction
 import android.widget.Button
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,6 +13,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +30,7 @@ import com.example.b2bhehe.ui.theme.B2bHEHETheme
 import androidx.compose.material3.Button
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -41,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import org.w3c.dom.Text
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -138,22 +142,69 @@ fun centeredBox(modifier: Modifier = Modifier){
         .height(550.dp),
         border = BorderStroke(2.dp, Color.Black)
     ){
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .height(100.dp)
-            .background(Color.Black)
-        ){
-            PressIt(modifier = modifier
-                .align(Alignment.Center)
+        Column(modifier = Modifier.fillMaxSize()){
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp)
+                //.background(Color.Black)
+            ){
+                Text(pressed)
+            }
+            //divider
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .border(2.dp, Color.Black)
             )
+
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+            ){
+                BottomHalfGrid(3,3, labels) //call in our other container for the other half
+            }
         }
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp)
-            .border(2.dp, Color.Black)
-        )
+
     }
 }
 var counter by mutableStateOf(0)
 //there are two types to keep track of info. remember and mutableStateOf, mutatable state of just
 //keeps track of info to know for the compostible to update
+val labels = listOf<String>("9","8","7","6","5","4","3","2","1")
+var pressed : String = ""
+@Composable
+fun BottomHalfGrid(rows: Int, cols: Int, labels: List<String>){
+    Column(modifier = Modifier.fillMaxSize()){
+        for (r in 0 until rows){
+            Row(modifier = Modifier.weight(1f)){
+                for (c in 0 until cols){
+                    val index = r * cols + c
+                    Box(modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .border(2.dp, Color.Black),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Cell(text = labels[index], onClick = {
+                            pressed = labels[index]
+                        })
+                    }
+                }
+            }
+        }
+    }
+}
+fun Preview(text: String): String { //this is how you change the return type
+    return text
+}
+@Composable
+fun Cell(text: String, onClick: () -> Unit, modifier: Modifier = Modifier){
+    Box(modifier = Modifier
+        .border(2.dp, Color.Black)
+        .clickable{ onClick() }
+        .padding(12.dp),
+        contentAlignment = Alignment.Center
+    ){
+        Text(text)
+    }
+}
