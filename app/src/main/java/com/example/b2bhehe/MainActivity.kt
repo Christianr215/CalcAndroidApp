@@ -14,6 +14,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -103,14 +104,6 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
     )
 }
 
-@Preview(showBackground = true) //preview only runs in the android studio
-@Composable //composable makes a function draw something on screen
-fun GreetingPreview() {
-    B2bHEHETheme {
-        Greeting("World")
-    }
-}
-
 @Composable
 fun Header(modifier: Modifier = Modifier){
     Text("Testing", modifier = modifier)
@@ -138,14 +131,15 @@ fun getCount() : Int{
 @Composable
 fun centeredBox(modifier: Modifier = Modifier){
     Card(modifier = modifier //be sure to reference the actual modifer called, captilization
-        .width(260.dp)
+        .width(280.dp)
         .height(550.dp),
         border = BorderStroke(2.dp, Color.Black)
     ){
         Column(modifier = Modifier.fillMaxSize()){
             Box(modifier = Modifier
                 .fillMaxWidth()
-                .height(100.dp)
+                .height(100.dp),
+                contentAlignment = Alignment.Center
                 //.background(Color.Black)
             ){
                 Text(pressed)
@@ -161,7 +155,7 @@ fun centeredBox(modifier: Modifier = Modifier){
                 .fillMaxWidth()
                 .weight(1f)
             ){
-                BottomHalfGrid(3,3, labels) //call in our other container for the other half
+                BottomHalfGrid(5,3, labels) //call in our other container for the other half
             }
         }
 
@@ -170,8 +164,8 @@ fun centeredBox(modifier: Modifier = Modifier){
 var counter by mutableStateOf(0)
 //there are two types to keep track of info. remember and mutableStateOf, mutatable state of just
 //keeps track of info to know for the compostible to update
-val labels = listOf<String>("9","8","7","6","5","4","3","2","1")
-var pressed : String = ""
+val labels = listOf<String>("9","8","7","6","5","4","3","2","1","+","0","-","/","=","C")
+var pressed by mutableStateOf("") //since its gonna get updated
 @Composable
 fun BottomHalfGrid(rows: Int, cols: Int, labels: List<String>){
     Column(modifier = Modifier.fillMaxSize()){
@@ -179,16 +173,18 @@ fun BottomHalfGrid(rows: Int, cols: Int, labels: List<String>){
             Row(modifier = Modifier.weight(1f)){
                 for (c in 0 until cols){
                     val index = r * cols + c
-                    Box(modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .border(2.dp, Color.Black),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Cell(text = labels[index], onClick = {
-                            pressed = labels[index]
-                        })
-                    }
+                        Cell(text = labels[index], onClick = { //cell is already a box, no need to put box inside box
+                            pressed += labels[index]
+                            if (labels[index] == "C"){
+                                pressed = ""
+                            }
+                            if (labels[index] == "="){
+                                pressed = Solving(pressed).toString()
+                            }
+                        }, modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                        )
                 }
             }
         }
@@ -199,7 +195,7 @@ fun Preview(text: String): String { //this is how you change the return type
 }
 @Composable
 fun Cell(text: String, onClick: () -> Unit, modifier: Modifier = Modifier){
-    Box(modifier = Modifier
+    Box(modifier = modifier
         .border(2.dp, Color.Black)
         .clickable{ onClick() }
         .padding(12.dp),
@@ -207,4 +203,7 @@ fun Cell(text: String, onClick: () -> Unit, modifier: Modifier = Modifier){
     ){
         Text(text)
     }
+}
+fun Solving(line : String) : Int{
+    return 1 //testing
 }
