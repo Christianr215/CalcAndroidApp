@@ -174,12 +174,28 @@ fun BottomHalfGrid(rows: Int, cols: Int, labels: List<String>){
                 for (c in 0 until cols){
                     val index = r * cols + c
                         Cell(text = labels[index], onClick = { //cell is already a box, no need to put box inside box
-                            pressed += labels[index]
-                            if (labels[index] == "C"){
-                                pressed = ""
-                            }
-                            if (labels[index] == "="){
-                                pressed = Solving(pressed).toString()
+                            val key = labels[index]
+
+                            when (key) { //depending on whatever key is pressed, activate
+                                "C" -> pressed = ""
+                                //kinda like if statements, but more cleaner
+                                "=" -> {
+                                    if (!isValid(pressed)) {
+                                        pressed = "Error"
+                                    } else {
+                                        try {
+                                            pressed = Solving(pressed).toString()
+                                        } catch (e: Exception) { //cactch error so program app diesnt crash
+                                            pressed = "Error"
+                                        }
+                                    }
+                                }
+
+                                else -> {
+                                    //regular typing
+                                    if (pressed == "Error") pressed = ""
+                                    pressed += key
+                                }
                             }
                         }, modifier = Modifier
                             .weight(1f)
@@ -205,5 +221,58 @@ fun Cell(text: String, onClick: () -> Unit, modifier: Modifier = Modifier){
     }
 }
 fun Solving(line : String) : Int{
-    return 1 //testing
+    val expression = line.replace(" ", "") //removes all spaces, easier
+
+    var result = 0
+    var currentNumber = ""
+    var lastOperator = '+' //placeholder, so it can start updating after initial loop
+
+    for (ch in expression) {
+        if (ch.isDigit()) {
+            currentNumber += ch //start taking the numbers
+        } else if (ch == '+' || ch == '-') {
+            if (currentNumber.isEmpty()) throw IllegalArgumentException("Missing number") //we have nothing to work with
+            val num = currentNumber.toInt() //turn what we have so far to a num
+
+            result = when (lastOperator) {
+                '+' -> result + num
+                '-' -> result - num //when cases
+                else -> result
+            }
+
+            lastOperator = ch //save that new operator
+            currentNumber = "" //reset the new chain
+        } else {
+            throw IllegalArgumentException("Invalid character: $ch") //error check
+        }
+    }
+    //apply the last number
+    if (currentNumber.isEmpty()) throw IllegalArgumentException("Ends with operator") //no numbers to work with
+    val num = currentNumber.toInt()
+    result = when (lastOperator) {
+        '+' -> result + num
+        '-' -> result - num
+        else -> result
+    }
+
+    return result
+}
+
+fun isValid(line : String) : Boolean{
+    if (line.indexOf("+") == -1 && line.indexOf('/') == -1 && line.indexOf('-') == -1){
+        return false
+    }
+    val expression = line.replace(" ", "")
+    if (expression.isEmpty()){
+        return false
+    }
+    if (!expression.first().isDigit() || !expression.last().isDigit()){
+        return false
+    }
+    for (i in 1 until expression.length) {
+        if ((expression[i] == '+' || expression[i] == '-') && (expression[i-1] == '+' || expression[i-1] == '-')){
+            return false
+        }
+    }
+    return true
 }
