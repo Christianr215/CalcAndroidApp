@@ -183,10 +183,12 @@ fun BottomHalfGrid(rows: Int, cols: Int, labels: List<String>){
                                     if (!isValid(pressed)) {
                                         pressed = "Error"
                                     } else {
-                                        try {
-                                            pressed = Solving(pressed).toString()
+                                        pressed = try {
+                                            val ans = Solving(pressed)
+                                            // nice formatting: show 5 instead of 5.0
+                                            if (ans % 1.0 == 0.0) ans.toInt().toString() else ans.toString()
                                         } catch (e: Exception) { //cactch error so program app diesnt crash
-                                            pressed = "Error"
+                                            "Error"
                                         }
                                     }
                                 }
@@ -220,39 +222,46 @@ fun Cell(text: String, onClick: () -> Unit, modifier: Modifier = Modifier){
         Text(text)
     }
 }
-fun Solving(line : String) : Int{
-    val expression = line.replace(" ", "") //removes all spaces, easier
+fun Solving(line : String) : Double{
+    val (numbers, ops) = tokenize(line)
 
-    var result = 0
-    var currentNumber = ""
-    var lastOperator = '+' //placeholder, so it can start updating after initial loop
+    // Pass 1: handle * and /
+    var i = 0
+    while (i < ops.size) {
+        val op = ops[i]
+        if (op == '*' || op == '/') {
+            val a = numbers[i]
+            val b = numbers[i + 1]
 
-    for (ch in expression) {
-        if (ch.isDigit()) {
-            currentNumber += ch //start taking the numbers
-        } else if (ch == '+' || ch == '-') {
-            if (currentNumber.isEmpty()) throw IllegalArgumentException("Missing number") //we have nothing to work with
-            val num = currentNumber.toInt() //turn what we have so far to a num
-
-            result = when (lastOperator) {
-                '+' -> result + num
-                '-' -> result - num //when cases
-                else -> result
+            val value = when (op) {
+                '*' -> a * b
+                '/' -> {
+                    if (b == 0.0) throw ArithmeticException("Divide by zero")
+                    a / b
+                }
+                else -> error("unreachable")
             }
 
-            lastOperator = ch //save that new operator
-            currentNumber = "" //reset the new chain
+            // Replace a (index i) and b (index i+1) with value
+            numbers[i] = value
+            numbers.removeAt(i + 1)
+            ops.removeAt(i)
+            // don't i++ because we need to re-check at same position
         } else {
-            throw IllegalArgumentException("Invalid character: $ch") //error check
+            i++
         }
     }
-    //apply the last number
-    if (currentNumber.isEmpty()) throw IllegalArgumentException("Ends with operator") //no numbers to work with
-    val num = currentNumber.toInt()
-    result = when (lastOperator) {
-        '+' -> result + num
-        '-' -> result - num
-        else -> result
+
+    // Pass 2: handle + and -
+    var result = numbers[0]
+    for (j in ops.indices) {
+        val op = ops[j]
+        val num = numbers[j + 1]
+        result = when (op) {
+            '+' -> result + num
+            '-' -> result - num
+            else -> throw IllegalArgumentException("Unexpected op: $op")
+        }
     }
 
     return result
@@ -275,4 +284,32 @@ fun isValid(line : String) : Boolean{
         }
     }
     return true
+}
+fun tokenize(expr: String): Pair<MutableList<Double>, MutableList<Char>> {
+    val s = expr.replace(" ", "")
+    if (s.isEmpty()) throw IllegalArgumentException("Empty")
+
+    val numbers = mutableListOf<Double>()
+    val ops = mutableListOf<Char>()
+    var current = ""
+
+    for (ch in s) {
+        when {
+            ch.isDigit() || ch == '.' -> current += ch
+
+            ch == '+' || ch == '-' || ch == '*' || ch == '/' -> {
+                if (current.isEmpty()) throw IllegalArgumentException("Missing number")
+                numbers.add(current.toDouble())
+                ops.add(ch)
+                current = ""
+            }
+
+            else -> throw IllegalArgumentException("Invalid char: $ch")
+        }
+    }
+
+    if (current.isEmpty()) throw IllegalArgumentException("Ends with operator")
+    numbers.add(current.toDouble())
+
+    return Pair(numbers, ops)
 }
